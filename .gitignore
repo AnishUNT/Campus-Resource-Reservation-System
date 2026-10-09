@@ -1,0 +1,12 @@
+# Build output
+build/
+reservation_system
+*.o
+*.out
+*.exe
+
+# Editor / OS noise
+.vscode/
+.idea/
+.DS_Store
+*.swp

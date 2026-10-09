@@ -1,0 +1,18 @@
+# Campus Resource Reservation System - resource catalog
+#
+# Format (one record per line, fields separated by '|'):
+#     resourceId|name|type|capacity
+#
+#   resourceId : positive whole number, unique
+#   name       : display name, must not be empty
+#   type       : category such as StudyRoom, Lab, Equipment
+#   capacity   : positive whole number of people/units
+#
+# Blank lines and lines starting with '#' are ignored.
+
+101|Willis Library Study Room A|StudyRoom|6
+102|Willis Library Study Room B|StudyRoom|4
+201|Discovery Park Computer Lab|Lab|30
+202|NTDP B140 Robotics Lab|Lab|18
+301|Portable Projector Cart 1|Equipment|1
+302|Union Collaboration Pod 3|StudyRoom|8

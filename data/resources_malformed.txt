@@ -1,0 +1,11 @@
+# Sample file used by the malformed-record tests in tests/test_cases.md.
+# Good records load; bad ones are reported and skipped without crashing.
+
+101|Willis Library Study Room A|StudyRoom|6
+this line has no pipe separators at all
+102|Willis Library Study Room B|StudyRoom
+103|Bad Capacity Room|StudyRoom|not-a-number
+abc|Bad Id Room|StudyRoom|10
+104||StudyRoom|5
+101|Duplicate Id Room|StudyRoom|9
+201|Discovery Park Computer Lab|Lab|30
