@@ -35,4 +35,5 @@ Jacob attempted to push the files to GitHub but reported difficulties. Anish han
 - Team member invited: Jacob Casilio (`Jakecas1209`).
 - Anish pushed the complete project files.
 - Jacob reported an unsuccessful push attempt.
-- A completed feature-branch merge or pull request is not documented in this report.
+- Anish merged `feature/final-project` into `main` through pull request #1 on October 11, 2026.
+- Pull request: https://github.com/AnishUNT/Campus-Resource-Reservation-System/pull/1
