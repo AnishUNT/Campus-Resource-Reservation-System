@@ -16,6 +16,7 @@ void ReservationList::insertReservation(const Reservation& reservation) {
         m_head = node;
         m_tail = node;
     } else {
+        // The tail pointer lets us append without traversing the list.
         m_tail->next = node;
         m_tail       = node;
     }
@@ -147,14 +148,9 @@ void ReservationList::clear() {
     m_size = 0;
 }
 
-std::size_t ReservationList::countForResource(int resourceId) const {
+std::size_t ReservationList::countForResource(int id) const {
     std::size_t count = 0;
-    ReservationNode* current = m_head;
-    while (current != nullptr) {
-        if (current->data.getResourceId() == resourceId) {
-            count++;
-        }
-        current = current->next;
-    }
+    for (ReservationNode* node = m_head; node; node = node->next)
+        if (node->data.getResourceId() == id) ++count;
     return count;
 }

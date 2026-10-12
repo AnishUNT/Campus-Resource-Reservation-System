@@ -239,7 +239,7 @@ Re-run and re-record these before submission.
   `99`, then `-3`, then `0`.
 - **Scripted:** `printf 'abc\nhello world\n\n99\n-3\n0\n' | ./reservation_system`
 - **Expected:** Each invalid entry produces
-  `"<input>" is not a valid option. Please enter a number from 0 to 10.` and the menu
+  `"<input>" is not a valid option. Please enter a number from 0 to 13.` and the menu
   redisplays. The input stream is never left in a failed state (input is read with
   `std::getline`, never `cin >> int`), and the program exits normally on `0`.
 - **Status:** Not re-run individually for this update; see automated coverage in TestingResults.md.

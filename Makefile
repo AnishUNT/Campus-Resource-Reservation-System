@@ -1,4 +1,4 @@
-# Campus Resource Reservation System - Milestone 1
+# Campus Resource Reservation System - Final Project
 #
 #   make          build ./reservation_system
 #   make run      build then run

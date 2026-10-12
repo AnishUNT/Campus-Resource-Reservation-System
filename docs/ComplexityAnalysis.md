@@ -15,7 +15,10 @@ Let `n` be active reservations, `w` waiting requests, `c` cancelled reservations
 | Stack push / pop / peek | O(1) | Change or read only the top node |
 | Undo cancellation | O(n) | Check ID and time conflict before O(1) pop and insertion |
 | Cancellation history display | O(c) | Traverse the stack from newest to oldest |
+| Resource linear search | O(r) | Compare each resource ID until a match or end |
+| Merge sort by resource name | O(r log r) | Halve recursively and merge each level in linear time |
 | Catalog loading | O(Lr), worst O(r²) for valid rows | Each of L input lines may check duplicate ID by linear search |
+| All system reports | O(n + r(n + w + r)) | Display active list, then count active/waiting/demand per resource |
 
 ## Waiting-list processing after cancellation
 
@@ -37,4 +40,5 @@ an overlapping window in O(n). Only successful validation pops and inserts in O(
 A refused undo keeps the original history entry. Total time is O(n).
 
 Each linked structure owns one node per entry: O(n), O(w), and O(c) space.
+The catalog and demand counts use O(r) space. Merge sort uses O(r) temporary arrays
 and O(log r) recursion depth; it sorts a copy so stored resource order remains unchanged.

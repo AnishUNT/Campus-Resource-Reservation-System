@@ -15,6 +15,8 @@ public:
 
     void displayAllResources() const;
 
+    std::vector<Resource> resourcesSortedByName() const;
+    void displayResourcesSortedByName() const;
 
     const Resource* findResourceById(int resourceId) const;
 

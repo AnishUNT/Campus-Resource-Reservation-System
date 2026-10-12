@@ -106,6 +106,7 @@ void ResourceManager::displayAllResources() const {
     }
 }
 
+// Linear search checks each resource until its ID matches.
 const Resource* ResourceManager::findResourceById(int resourceId) const {
     for (std::size_t i = 0; i < m_resources.size(); ++i) {
         if (m_resources[i].getResourceId() == resourceId) {
@@ -125,3 +126,38 @@ int ResourceManager::getSkippedRecordCount() const { return m_skippedRecords; }
 
 const std::vector<Resource>& ResourceManager::getResources() const { return m_resources; }
 
+namespace {
+
+// Split into two halves, sort each half, then merge them in name order.
+void mergeSort(std::vector<Resource>& values, std::vector<Resource>& scratch,
+               std::size_t begin, std::size_t end) {
+    if (end - begin < 2) return;
+    const std::size_t middle = begin + (end - begin) / 2;
+    mergeSort(values, scratch, begin, middle);
+    mergeSort(values, scratch, middle, end);
+    std::size_t left = begin, right = middle;
+    for (std::size_t out = begin; out < end; ++out) {
+        bool takeLeft = right == end;
+        if (left < middle && right < end) {
+            takeLeft = values[left].getName() < values[right].getName() ||
+                (values[left].getName() == values[right].getName() &&
+                 values[left].getResourceId() <= values[right].getResourceId());
+        }
+        if (left < middle && takeLeft) scratch[out] = values[left++];
+        else scratch[out] = values[right++];
+    }
+    for (std::size_t i = begin; i < end; ++i) values[i] = scratch[i];
+}
+}
+std::vector<Resource> ResourceManager::resourcesSortedByName() const {
+    std::vector<Resource> result = m_resources;
+    std::vector<Resource> scratch = result;
+    mergeSort(result, scratch, 0, result.size());
+    return result;
+}
+void ResourceManager::displayResourcesSortedByName() const {
+    if (m_resources.empty()) { std::cout << "No resources are loaded.\n"; return; }
+    std::cout << "Resources sorted by name (merge sort):\n";
+    Resource::displayHeader();
+    for (const Resource& resource : resourcesSortedByName()) resource.display();
+}

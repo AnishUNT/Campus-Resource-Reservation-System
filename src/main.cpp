@@ -7,6 +7,7 @@
 #include "ReservationList.h"
 #include "ResourceManager.h"
 #include "WaitingList.h"
+#include "SystemReports.h"
 
 namespace {
 
@@ -24,7 +25,7 @@ std::string toLower(const std::string& text) {
     return lowered;
 }
 
-// Read a line and let the user cancel an operation.
+// Read a whole line so invalid input does not break later prompts.
 InputStatus promptLine(const std::string& prompt, std::string& out) {
     std::cout << prompt;
     std::cout.flush();
@@ -173,7 +174,7 @@ int generateReservationId(const ReservationList& activeReservations) {
     return candidate;
 }
 
-// Try waiting requests in order after a booking is cancelled.
+// Promote the first waiting request that fits the freed resource and date.
 bool promoteFromWaitingList(int resourceId,
                             const std::string& date,
                             ReservationList& activeReservations,
@@ -263,7 +264,8 @@ bool handleCheckAvailability(const ResourceManager& manager,
 
 bool handleCreateReservation(const ResourceManager& manager,
                              ReservationList& activeReservations,
-                             WaitingList& waitingList) {
+                             WaitingList& waitingList,
+                             SystemReports& reports) {
     if (manager.getResourceCount() == 0) {
         std::cout << "No resources are loaded, so reservations cannot be created.\n";
         return true;
@@ -327,6 +329,7 @@ bool handleCreateReservation(const ResourceManager& manager,
         }
         if (status == InputStatus::Ok && joinQueue) {
             waitingList.enqueue(WaitingRequest(studentId, resourceId, date, startTime, endTime));
+            reports.recordRequest(resourceId);
             std::cout << "Added to the waiting list at position " << waitingList.size() << ".\n";
         } else {
             std::cout << "No reservation was created.\n";
@@ -336,6 +339,7 @@ bool handleCreateReservation(const ResourceManager& manager,
 
     const Reservation reservation(reservationId, studentId, resourceId, date, startTime, endTime);
     activeReservations.insertReservation(reservation);
+    reports.recordRequest(resourceId);
 
     std::cout << "\nReservation created.\n";
     Reservation::displayHeader();
@@ -389,7 +393,8 @@ bool handleDisplayReservations(const ReservationList& activeReservations) {
 
 bool handleJoinWaitingList(const ResourceManager& manager,
                            const ReservationList& activeReservations,
-                           WaitingList& waitingList) {
+                           WaitingList& waitingList,
+                           SystemReports& reports) {
     if (manager.getResourceCount() == 0) {
         std::cout << "No resources are loaded, so the waiting list cannot be used.\n";
         return true;
@@ -441,6 +446,7 @@ bool handleJoinWaitingList(const ResourceManager& manager,
     }
 
     waitingList.enqueue(WaitingRequest(studentId, resourceId, date, startTime, endTime));
+    reports.recordRequest(resourceId);
     std::cout << "Student " << studentId << " joined the waiting list at position "
               << waitingList.size() << ".\n";
     return true;
@@ -456,7 +462,6 @@ bool handleDisplayCancellationHistory(const CancellationStack& cancellationHisto
     return true;
 }
 
-// Check the booking first so a failed undo stays on the stack.
 bool handleUndoCancellation(ReservationList& activeReservations,
                             CancellationStack& cancellationHistory) {
     Reservation mostRecent;
@@ -485,6 +490,7 @@ bool handleUndoCancellation(ReservationList& activeReservations,
         return true;
     }
 
+    // Keep the cancellation on the stack if restoring it would cause a conflict.
     Reservation restored;
     cancellationHistory.pop(restored);
     activeReservations.insertReservation(restored);
@@ -508,6 +514,17 @@ bool handleRemoveWaiting(WaitingList& waiting) {
     else std::cout << "No waiting request at that position.\n";
     return true;
 }
+bool handleSearchResource(const ResourceManager& manager) {
+    int id = 0;
+    const InputStatus status = promptPositiveInt("Resource ID to search: ", "Resource ID", id);
+    if (status == InputStatus::EndOfInput) return false;
+    if (status == InputStatus::Cancelled) return true;
+    const Resource* resource = manager.findResourceById(id);
+    if (resource) { Resource::displayHeader(); resource->display(); }
+    else std::cout << "No resource with ID " << id << ".\n";
+    return true;
+}
+
 void displayMenu() {
     std::cout << "\n==========================================\n"
               << "  Campus Resource Reservation System\n"
@@ -522,6 +539,9 @@ void displayMenu() {
               << "  8. Display cancellation history\n"
               << "  9. Undo most recent cancellation\n"
               << " 10. Remove student from waiting list\n"
+              << " 11. Search resource by ID (linear search)\n"
+              << " 12. Display resources sorted by name (merge sort)\n"
+              << " 13. Generate system reports\n"
               << "  0. Exit\n"
               << "------------------------------------------\n";
 }
@@ -532,11 +552,11 @@ int main(int argc, char* argv[]) {
 
     const std::string resourceFile = (argc > 1) ? argv[1] : DEFAULT_RESOURCE_FILE;
 
-    // These objects hold all data for the current run.
     ResourceManager   manager;
     ReservationList   activeReservations;
     WaitingList       waitingList;
     CancellationStack cancellationHistory;
+    SystemReports     reports;
 
     std::cout << "Loading resources from \"" << resourceFile << "\"...\n";
     if (manager.loadFromFile(resourceFile)) {
@@ -550,13 +570,12 @@ int main(int argc, char* argv[]) {
                   << "Reservation options will be unavailable.\n";
     }
 
-    // Keep showing the menu until the user exits.
     bool running = true;
     while (running) {
         displayMenu();
 
         std::string choice;
-        if (promptLine("Select an option (0-10): ", choice) == InputStatus::EndOfInput) {
+        if (promptLine("Select an option (0-13): ", choice) == InputStatus::EndOfInput) {
             break;
         }
 
@@ -565,13 +584,13 @@ int main(int argc, char* argv[]) {
         } else if (choice == "2") {
             running = handleCheckAvailability(manager, activeReservations);
         } else if (choice == "3") {
-            running = handleCreateReservation(manager, activeReservations, waitingList);
+            running = handleCreateReservation(manager, activeReservations, waitingList, reports);
         } else if (choice == "4") {
             running = handleCancelReservation(activeReservations, waitingList, cancellationHistory);
         } else if (choice == "5") {
             running = handleDisplayReservations(activeReservations);
         } else if (choice == "6") {
-            running = handleJoinWaitingList(manager, activeReservations, waitingList);
+            running = handleJoinWaitingList(manager, activeReservations, waitingList, reports);
         } else if (choice == "7") {
             running = handleDisplayWaitingList(waitingList);
         } else if (choice == "8") {
@@ -580,13 +599,19 @@ int main(int argc, char* argv[]) {
             running = handleUndoCancellation(activeReservations, cancellationHistory);
         } else if (choice == "10") {
             running = handleRemoveWaiting(waitingList);
+        } else if (choice == "11") {
+            running = handleSearchResource(manager);
+        } else if (choice == "12") {
+            manager.displayResourcesSortedByName();
+        } else if (choice == "13") {
+            reports.display(manager, activeReservations, waitingList);
         } else if (choice == "0") {
             std::cout << "Exiting. Goodbye!\n";
             running = false;
         } else {
 
             std::cout << "\"" << choice << "\" is not a valid option. "
-                      << "Please enter a number from 0 to 10.\n";
+                      << "Please enter a number from 0 to 13.\n";
         }
     }
 
