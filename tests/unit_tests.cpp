@@ -5,6 +5,7 @@
 #include "ReservationList.h"
 #include "WaitingList.h"
 #include "CancellationStack.h"
+#include "SystemReports.h"
 
 int main() {
     using namespace ReservationUtils;
@@ -59,8 +60,20 @@ int main() {
     ResourceManager manager;
     assert(manager.loadFromFile("data/resources.txt") && manager.getResourceCount()==6);
     assert(manager.findResourceById(101) && !manager.findResourceById(999));
+    auto sorted=manager.resourcesSortedByName();
+    for (std::size_t i=1;i<sorted.size();++i) assert(sorted[i-1].getName()<=sorted[i].getName());
+    assert(manager.getResources()[0].getResourceId()==101); // sort preserves catalog
+    const char* fixture="build/sort_fixture.txt";
+    { std::ofstream file(fixture); file << "3|Zulu|Lab|1\n2|Alpha|Lab|1\n1|Alpha|Lab|1\n4|Bad|Lab|1|\n"; }
+    assert(manager.loadFromFile(fixture) && manager.getResourceCount()==3);
+    sorted=manager.resourcesSortedByName();
+    assert(sorted[0].getResourceId()==1 && sorted[1].getResourceId()==2 && sorted[2].getResourceId()==3);
+    assert(manager.getSkippedRecordCount()==1);
     assert(!manager.loadFromFile("data/does_not_exist.txt"));
-    assert(manager.loadFromFile("data/resources_malformed.txt"));
-    assert(manager.getSkippedRecordCount() > 0);
+    assert(manager.resourcesSortedByName().empty());
+    SystemReports reports;
+    assert(reports.requestCount(101)==0);
+    reports.recordRequest(101); reports.recordRequest(101); reports.recordRequest(102);
+    assert(reports.requestCount(101)==2 && reports.requestCount(102)==1);
     std::cout << "Unit tests passed.\n";
 }

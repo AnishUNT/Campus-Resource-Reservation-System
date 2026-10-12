@@ -121,6 +121,7 @@ bool isValidDateFormat(const std::string& date) {
     return day <= limit;
 }
 
+// Back-to-back reservations are allowed because touching endpoints do not overlap.
 bool timesOverlap(const std::string& startA, const std::string& endA,
                   const std::string& startB, const std::string& endB) {
 
